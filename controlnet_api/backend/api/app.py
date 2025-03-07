@@ -6,7 +6,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from backend.api import model
-from backend.utils.logging_utils import get_logger
+from src.utils.logging_utils import get_logger
 
 logger = get_logger(__file__)
 
