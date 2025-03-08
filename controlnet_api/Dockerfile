@@ -27,15 +27,7 @@ RUN conda env create -f ControlNet/environment.yaml && \
 # set the conda environment activation and path variables directly to avoid reliance on .bashrc
 ENV PATH="/opt/conda/envs/control/bin:$PATH"
 
-# copy given Python script and JPG into git repo
-COPY engineering/code/awesomedemo.py ControlNet
-COPY engineering/img/mri_brain.jpg ControlNet/test_imgs/
-# activate environment and run script
-#WORKDIR $PYTHONPATH
-#CMD ["bash", "-c", "source activate control && python awesomedemo.py"]
-
 # copy API folder with backend and src/ code
-COPY controlnet_api $PATH_TMP/controlnet_api
-WORKDIR $PATH_TMP/controlnet_api
+COPY . $PATH_TMP/controlnet_api
 EXPOSE 8080
 CMD ["uvicorn", "backend.api.app:app", "--reload",  "--port",  "8080", "--host",  "0.0.0.0"]
