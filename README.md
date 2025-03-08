@@ -6,10 +6,28 @@ STRONG assumption: CUDA is available on the device.
 docker build -t awesomedemo .
 ```
 
-Run image:
+Run image (repalce <MY_IMAGE_NAME> with any name of your choice)
 ```bash
-docker run awesomedemo
+docker run --name <MY_IMAGE_NAME> --gpus all -it awesomedemo
 ```
+# Clean Up
+It makes sense to have an overview over existing images and containers and clean up on a regular basis to reduce space occupied by these object.
+
+See all images that were built:
+```bash
+docker images
+```
+
+To get an overview over all containers (also stopped ones):
+```bash
+docker ps -a
+```
+Remove images with
+```bash
+docker rm <IMAGE_NAME>
+```
+
+
 
 # CONTRIBUTION
 Install pre-commit with `pip add pre-commit` and initialize for this project with `pre-commit install`.

@@ -1,38 +1,41 @@
 # Start with Miniconda as the base image
 FROM continuumio/miniconda3
 
-# Install system dependencies in a single RUN command to minimize layers
+ENV PATH_TMP=/app/maincode
+ENV PYTHONPATH=$PATH_TMP/controlnet_api
+ENV CONDA_DEFAULT_ENV=control
+
+WORKDIR $PATH_TMP
+
+# install system dependencies
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y git wget && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Define the environment variable for the working directory
-ENV PATH_TMP=/app/maincode
-WORKDIR $PATH_TMP
-
-# Clone the repository and download the model in a single RUN command to reduce layers
+# clone repository and download the model
 RUN git clone https://github.com/lllyasviel/ControlNet.git && \
     mkdir -p ControlNet/models && \
     wget https://huggingface.co/lllyasviel/ControlNet/resolve/main/models/control_sd15_canny.pth -P ControlNet/models && \
     rm -rf /root/.git && \
     rm -rf /var/lib/apt/lists/*
 
-# Set PYTHONPATH environment variable
-ENV PYTHONPATH=$PATH_TMP/ControlNet
-WORKDIR $PYTHONPATH
-
-# Create the conda environment using the provided environment.yaml file
-RUN conda env create -f environment.yaml && \
+# create conda environment using the original environment.yaml file
+RUN conda env create -f ControlNet/environment.yaml && \
     conda clean --all -f -y
 
-# Set the conda environment activation and path variables directly to avoid reliance on .bashrc
+# set the conda environment activation and path variables directly to avoid reliance on .bashrc
 ENV PATH="/opt/conda/envs/control/bin:$PATH"
-ENV CONDA_DEFAULT_ENV=control
 
-# Copy the Python script and image to the appropriate directories
-COPY engineering/code/awesomedemo.py $PYTHONPATH/
-COPY engineering/img/mri_brain.jpg $PYTHONPATH/test_imgs/
+# copy given Python script and JPG into git repo
+COPY engineering/code/awesomedemo.py ControlNet
+COPY engineering/img/mri_brain.jpg ControlNet/test_imgs/
+# activate environment and run script
+#WORKDIR $PYTHONPATH
+#CMD ["bash", "-c", "source activate control && python awesomedemo.py"]
 
-# Activate conda environment and run the Python script with the CMD command
-CMD ["bash", "-c", "source activate control && python $PYTHONPATH/awesomedemo.py"]
+# copy API folder with backend and src/ code
+COPY controlnet_api $PATH_TMP/controlnet_api
+WORKDIR $PATH_TMP/controlnet_api
+EXPOSE 8080
+CMD ["uvicorn", "backend.api.app:app", "--reload",  "--port",  "8080", "--host",  "0.0.0.0"]
