@@ -9,14 +9,16 @@ WORKDIR $PATH_TMP
 
 # install system dependencies
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y git wget && \
+    apt-get install -y unzip wget && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # clone repository and download the model
-RUN git clone https://github.com/lllyasviel/ControlNet.git && \
-    mkdir -p ControlNet/models && \
-    wget https://huggingface.co/lllyasviel/ControlNet/resolve/main/models/control_sd15_canny.pth -P ControlNet/models && \
+RUN wget https://github.com/lllyasviel/ControlNet/archive/ed85cd1e25a5ed592f7d8178495b4483de0331bf.zip -O ControlNet.zip &&  \
+    unzip ControlNet.zip && \
+    mv ControlNet-ed85cd1e25a5ed592f7d8178495b4483de0331bf ControlNet && \
+    rm ControlNet.zip && \
+    wget https://huggingface.co/lllyasviel/ControlNet/resolve/38a62cbf79862c1bac73405ec8dc46133aee3e36/models/control_sd15_canny.pth -P ControlNet/models && \
     rm -rf /root/.git && \
     rm -rf /var/lib/apt/lists/*
 
