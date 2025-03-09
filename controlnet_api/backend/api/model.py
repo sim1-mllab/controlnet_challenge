@@ -12,7 +12,7 @@ from starlette.responses import StreamingResponse
 
 from src.model import controlnet_orchestration as orcas
 from backend.schemas.base import GenerationParams
-from backend.api.utils.model import model_train, store_image
+from backend.api.utils.model import model_train, store_image, is_valid_image, ALLOWED_MIME_TYPES
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__file__)
@@ -22,11 +22,6 @@ model_router = APIRouter(
     tags=["model"],
     responses={404: {"description": "Not found"}},
 )
-
-UPLOAD_DIR = Path("uploads")
-RESULT_DIR = Path("results")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
 
 PRE_TRAINED_MODEL = None
 if PRE_TRAINED_MODEL is None:
@@ -52,21 +47,24 @@ async def upload_image(
 ):
     if PRE_TRAINED_MODEL is None:
         raise HTTPException(status_code=503, detail="Model is not ready yet.")
+
+    if file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPG, JPEG, and PNG are allowed.")
+
     try:
         logger.info(f"Reading uploaded file: {file.filename}")
         file_content = await file.read()
+        logger.info("Check if the file is a valid image.")
+        if not is_valid_image(file_content):
+            raise HTTPException(status_code=400, detail="Uploaded file is not a valid image.")
+
         logger.info(f"Read {len(file_content)} bytes from {file.filename}")
 
-        file_location = UPLOAD_DIR / file.filename
-        logger.info(f"Store uploaded data to {file_location}")
-        with open(file_location, "wb") as f:
-            f.write(file_content)
+        logger.info("Open the image from the bytes data")
+        image = imageio.imread(BytesIO(file_content))
 
-        # Open the image from the bytes data
-        image = imageio.imread(BytesIO(file_content))  # Read image directly from bytes
-
-        # load parameters
         parameters = model_parameters.dict()
+        logger.info(f"load parameters {parameters}")
         logger.info("apply the model")
         output_images = model_train(
             input_image=image, model=PRE_TRAINED_MODEL, params=parameters
@@ -77,6 +75,9 @@ async def upload_image(
         counter = 0
         zip_buffer = BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            logger.info("Store original image")
+            zip_file.writestr(file.filename, file_content)
+            logger.info("Store generated images")
             for res in output_images:
                 counter += 1
                 pil_image = Image.fromarray(res)
@@ -84,7 +85,6 @@ async def upload_image(
                 pil_image.save(img_byte_arr, format="PNG")
                 img_byte_arr.seek(0)  # Go to the beginning of the BytesIO buffer
                 output_filename = f"result_{counter}.png"
-                store_image(image=pil_image, filepath=RESULT_DIR, filename=output_filename)
                 zip_file.writestr(output_filename, img_byte_arr.read())
         zip_buffer.seek(0)
         # Return the output image as a StreamingResponse

@@ -8,7 +8,6 @@ from fastapi import FastAPI
 from backend.api import model
 from src.utils.logging_utils import get_logger
 
-
 logger = get_logger(__file__)
 
 description = """
