@@ -3,13 +3,17 @@ STRONG assumption: CUDA is available on the device.
 
 # Build Docker
 ```bash
-docker build -t awesomedemo .
+docker build -t controlnet_api .
 ```
 
-Run image (repalce <MY_IMAGE_NAME> with any name of your choice)
+Run image (replace <MY_IMAGE_NAME> with any name of your choice)
 ```bash
-docker run --name <MY_IMAGE_NAME> --gpus all -it awesomedemo
+docker run --name <MY_IMAGE_NAME> --gpus all -it controlnet_api
 ```
+
+
+
+
 # Clean Up
 It makes sense to have an overview over existing images and containers and clean up on a regular basis to reduce space occupied by these object.
 

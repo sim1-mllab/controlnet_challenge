@@ -3,17 +3,16 @@ FastAPI app code for endpoint queries/.
 """
 
 from pathlib import Path
-
+import zipfile
 import imageio
 from PIL import Image
 from io import BytesIO
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
-from fastapi.responses import JSONResponse
 from starlette.responses import StreamingResponse
 
+from src.model import controlnet_orchestration as orcas
 from backend.schemas.base import GenerationParams
 from backend.api.utils.model import model_train, store_image
-from src.model import controlnet_orchestration as orcas
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__file__)
@@ -28,8 +27,8 @@ UPLOAD_DIR = Path("uploads")
 RESULT_DIR = Path("results")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-PRE_TRAINED_MODEL = None
 
+PRE_TRAINED_MODEL = None
 if PRE_TRAINED_MODEL is None:
     logger.info(
         "Loading pre-trained model - this is generally loaded as it will be re-used"
@@ -37,6 +36,7 @@ if PRE_TRAINED_MODEL is None:
     PRE_TRAINED_MODEL = orcas.load_model(
         model_file_path=orcas.MODEL_PTH_PATH, model_config_path=orcas.MODEL_CONFIG_PATH
     )
+    logger.info("Model is loaded")
 
 
 @model_router.get("/health")
@@ -46,7 +46,7 @@ async def health_check():
     return {"status": "Model is ready!"}
 
 
-@model_router.post("/generate", response_class=JSONResponse)
+@model_router.post("/generate", response_class=StreamingResponse)
 async def upload_image(
     file: UploadFile = File(...), model_parameters: GenerationParams = Depends()
 ):
@@ -75,26 +75,21 @@ async def upload_image(
 
         logger.info("save the output image into a BytesIO object to return")
         counter = 0
-        for res in output_images:
-            counter += 1
-            pil_image = Image.fromarray(res)
-            img_byte_arr = BytesIO()
-            pil_image.save(img_byte_arr, format="PNG")
-            img_byte_arr.seek(0)  # Go to the beginning of the BytesIO buffer
-            output_filename = f"result_{counter}.png"
-            store_image(image=pil_image, filepath=RESULT_DIR, filename=output_filename)
-
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for res in output_images:
+                counter += 1
+                pil_image = Image.fromarray(res)
+                img_byte_arr = BytesIO()
+                pil_image.save(img_byte_arr, format="PNG")
+                img_byte_arr.seek(0)  # Go to the beginning of the BytesIO buffer
+                output_filename = f"result_{counter}.png"
+                store_image(image=pil_image, filepath=RESULT_DIR, filename=output_filename)
+                zip_file.writestr(output_filename, img_byte_arr.read())
+        zip_buffer.seek(0)
         # Return the output image as a StreamingResponse
-        return StreamingResponse(img_byte_arr, media_type="image/png")
+        return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": "attachment; filename=generated_images.zip"})
 
     except Exception as e:
         logger.error(f"Error processing file {file.filename}: {e}")
         return {"error": str(e)}
-
-
-if __name__ == "__main__":
-    import uvicorn
-    from fastapi import FastAPI
-
-    app = FastAPI()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
