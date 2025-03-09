@@ -1,4 +1,5 @@
 # ignore everything
 *
+!README.md
 !.gitignore
 !controlnet_api/
