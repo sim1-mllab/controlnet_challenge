@@ -16,6 +16,7 @@ RUN apt-get update && apt-get upgrade -y && \
 # clone repository and download the model
 RUN wget https://github.com/lllyasviel/ControlNet/archive/ed85cd1e25a5ed592f7d8178495b4483de0331bf.zip -O ControlNet.zip &&  \
     unzip ControlNet.zip && \
+    mv ControlNet-ed85cd1e25a5ed592f7d8178495b4483de0331bf ControlNet && \
     rm ControlNet.zip && \
     wget https://huggingface.co/lllyasviel/ControlNet/resolve/38a62cbf79862c1bac73405ec8dc46133aee3e36/models/control_sd15_canny.pth -P ControlNet/models && \
     rm -rf /root/.git && \
