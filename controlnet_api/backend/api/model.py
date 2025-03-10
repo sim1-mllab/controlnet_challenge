@@ -9,10 +9,10 @@ from io import BytesIO
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
 from starlette.responses import StreamingResponse, JSONResponse, Response
 
-from src.model import controlnet_orchestration as orcas
+from backend.api.utils import controlnet_orchestration as orcas
 from backend.schemas.base import GenerationParams
 from backend.api.utils.model import model_train, is_valid_image, ALLOWED_MIME_TYPES
-from src.utils.logging_utils import get_logger
+from backend.api.utils.logging_utils import get_logger
 
 logger = get_logger(__file__)
 

@@ -5,8 +5,8 @@ import torch
 import numpy as np
 from typing import Any, List
 
-from src.model import controlnet_orchestration as orcas
-from src.utils.logging_utils import get_logger
+from backend.api.utils import controlnet_orchestration as orcas
+from backend.api.utils.logging_utils import get_logger
 
 logger = get_logger(__file__)
 
