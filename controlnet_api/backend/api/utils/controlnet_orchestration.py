@@ -6,10 +6,10 @@ import numpy as np
 import sys
 from pathlib import Path
 from typing import Any, List
-from src.utils.logging_utils import get_logger
+from backend.api.utils.logging_utils import get_logger
 
 # Get the parent directory of the current file (main.py)
-parent_dir = Path(__file__).resolve().parents[3]
+parent_dir = Path(__file__).resolve().parents[4]
 controlnet_dir = parent_dir / "ControlNet"
 
 # Add the ControlNet folder to sys.path
