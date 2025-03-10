@@ -1,5 +1,4 @@
 from pathlib import Path
-from fastapi import UploadFile
 from PIL import Image
 from io import BytesIO
 import torch
@@ -10,7 +9,6 @@ from src.model import controlnet_orchestration as orcas
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__file__)
-
 
 
 # Allowed image MIME types
@@ -30,7 +28,9 @@ def is_valid_image(img_bytes: bytes) -> bool:
         return False
 
 
-def model_train(input_image: np.ndarray, params: dict, model: torch.nn.Module) -> List[Any]:
+def model_train(
+    input_image: np.ndarray, params: dict, model: torch.nn.Module
+) -> List[Any]:
     """
     Generate images using the ControlNet model.
     input_image: The image to be used as input for the model.

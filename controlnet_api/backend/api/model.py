@@ -2,18 +2,16 @@
 FastAPI app code for endpoint queries/.
 """
 
-from pathlib import Path
 import zipfile
 import imageio
 from PIL import Image
 from io import BytesIO
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
-from typing import Union
 from starlette.responses import StreamingResponse, JSONResponse, Response
 
 from src.model import controlnet_orchestration as orcas
 from backend.schemas.base import GenerationParams
-from backend.api.utils.model import model_train, store_image, is_valid_image, ALLOWED_MIME_TYPES
+from backend.api.utils.model import model_train, is_valid_image, ALLOWED_MIME_TYPES
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__file__)
@@ -58,14 +56,19 @@ async def upload_image(
         raise HTTPException(status_code=503, detail="Model is not ready yet.")
 
     if file.content_type not in ALLOWED_MIME_TYPES:
-        raise HTTPException(status_code=400, detail="Invalid file type. Only JPG, JPEG, and PNG are allowed.")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. Only JPG, JPEG, and PNG are allowed.",
+        )
 
     try:
         logger.info(f"Reading uploaded file: {file.filename}")
         file_content = await file.read()
         logger.info("Check if the file is a valid image.")
         if not is_valid_image(file_content):
-            raise HTTPException(status_code=400, detail="Uploaded file is not a valid image.")
+            raise HTTPException(
+                status_code=400, detail="Uploaded file is not a valid image."
+            )
 
         logger.info(f"Read {len(file_content)} bytes from {file.filename}")
 
@@ -83,7 +86,7 @@ async def upload_image(
         logger.info("save the output image into a BytesIO object to return")
         counter = 0
         zip_buffer = BytesIO()
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
             logger.info("Store original image")
             zip_file.writestr(file.filename, file_content)
             logger.info("Store generated images")
@@ -97,11 +100,14 @@ async def upload_image(
                 zip_file.writestr(output_filename, img_byte_arr.read())
         zip_buffer.seek(0)
         # Return the output image as a StreamingResponse
-        return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": "attachment; filename=generated_images.zip"})
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": "attachment; filename=generated_images.zip"
+            },
+        )
 
     except Exception as e:
         logger.error(f"Error processing file {file.filename}: {e}")
-        return JSONResponse(
-            status_code=400,
-            content={"error": str(e)}
-        )
+        return JSONResponse(status_code=400, content={"error": str(e)})
