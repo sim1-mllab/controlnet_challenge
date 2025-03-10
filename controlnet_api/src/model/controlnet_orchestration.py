@@ -5,6 +5,7 @@ from pytorch_lightning import seed_everything
 import numpy as np
 import sys
 from pathlib import Path
+from typing import Any, List
 from src.utils.logging_utils import get_logger
 
 # Get the parent directory of the current file (main.py)
@@ -28,7 +29,13 @@ MODEL_PTH_PATH = controlnet_dir / "models/control_sd15_canny.pth"
 MODEL_CONFIG_PATH = controlnet_dir / "models/cldm_v15.yaml"
 
 
-def load_model(model_file_path, model_config_path):
+def load_model(model_file_path: Path, model_config_path: Path) -> torch.nn.Module:
+    """
+    Load the ControlNet model.
+    model_file_path: The path to the model file.
+    model_config_path: The path to the model configuration file.
+    returns: The loaded model.
+    """
     model = create_model(config_path=model_config_path).cpu()
     model.load_state_dict(load_state_dict(model_file_path, location="cuda"))
 
@@ -36,29 +43,49 @@ def load_model(model_file_path, model_config_path):
 
 
 def process(
-    model,
-    input_image,
-    prompt,
-    a_prompt,
-    n_prompt,
-    num_samples,
-    image_resolution,
-    ddim_steps,
-    guess_mode,
-    strength,
-    scale,
-    seed,
-    eta,
-    low_threshold,
-    high_threshold,
-):
-    # original code from awesomedemo/process()
-    # NEWLY ADDED - make dependencies explicit to function
+    model: torch.nn.Module,
+    input_image: np.ndarray,
+    prompt: str,
+    a_prompt: str,
+    n_prompt: str,
+    num_samples: int,
+    image_resolution: int,
+    ddim_steps: int,
+    guess_mode: bool,
+    strength: float,
+    scale: float,
+    seed: int,
+    eta: float,
+    low_threshold: int,
+    high_threshold: int,
+) -> List[Any]:
+    """
+    Process the input image using the ControlNet model.
+    This is mostly original code from awesomedemo/process()
+
+    model: The ControlNet model to be used for processing.
+    input_image: The input image to be processed.
+    prompt: The prompt to be used for processing.
+    a_prompt: The added prompt to be used for processing.
+    n_prompt: The negative prompt to be used for processing.
+    num_samples: The number of samples to generate.
+    image_resolution: The image resolution in pixels.
+    ddim_steps: The number of steps for DDIM.
+    guess_mode: The guess mode flag.
+    strength: The strength parameter.
+    scale: The scale parameter.
+    seed: The seed parameter.
+    eta: The eta parameter.
+    low_threshold: The lower threshold for Canny.
+    high_threshold: The upper threshold for Canny.
+    returns: list of generated images.
+    """
+    #### NEWLY ADDED - make dependencies explicit to function
     logger.info("Initialize models")
     ddim_sampler = DDIMSampler(model)
     apply_canny = CannyDetector()
     logger.info("Initialize models")
-    ###
+    ############################################################
 
     with torch.no_grad():
         logger.info("resize image")

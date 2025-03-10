@@ -27,7 +27,7 @@ class GenerationParams(BaseModel):
     strength: float = Field(default=1.0, example=1.0, title="Strength", ge=0.0, le=2.0)
     scale: float = Field(default=9.0, example=9.0, title="Scale", ge=0.1, le=30)
     seed: int = Field(default=1, example=42, ge=-1, title="Seed")
-    eta: float = Field(default=0.0, example=0.0, title="eta (DDIM)", ge=0)
+    eta: float = Field(default=0.0, example=0.0, title="ETA (DDIM)", ge=0)
     low_threshold: int = Field(
         default=50, example=50, ge=1, le=250, title="Lower threshold (Canny)"
     )
