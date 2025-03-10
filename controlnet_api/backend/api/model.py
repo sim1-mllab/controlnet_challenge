@@ -35,7 +35,10 @@ if PRE_TRAINED_MODEL is None:
 
 
 @model_router.get("/health")
-async def health_check():
+async def health_check() -> dict:
+    """
+    Health check endpoint to verify if the model is ready.
+    """
     if PRE_TRAINED_MODEL is None:
         raise HTTPException(status_code=503, detail="Model is not ready yet.")
     return {"status": "Model is ready!"}
@@ -44,7 +47,12 @@ async def health_check():
 @model_router.post("/generate", response_class=StreamingResponse)
 async def upload_image(
     file: UploadFile = File(...), model_parameters: GenerationParams = Depends()
-):
+) -> StreamingResponse:
+    """
+    POST endpoint to generate images using the ControlNet model.
+    file: The image file to be used as input for the model.
+    model_parameters: The parameters to be used for the model.
+    """
     if PRE_TRAINED_MODEL is None:
         raise HTTPException(status_code=503, detail="Model is not ready yet.")
 
