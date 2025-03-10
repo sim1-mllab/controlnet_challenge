@@ -8,7 +8,8 @@ import imageio
 from PIL import Image
 from io import BytesIO
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
-from starlette.responses import StreamingResponse
+from typing import Union
+from starlette.responses import StreamingResponse, JSONResponse, Response
 
 from src.model import controlnet_orchestration as orcas
 from backend.schemas.base import GenerationParams
@@ -47,7 +48,7 @@ async def health_check() -> dict:
 @model_router.post("/generate", response_class=StreamingResponse)
 async def upload_image(
     file: UploadFile = File(...), model_parameters: GenerationParams = Depends()
-) -> StreamingResponse:
+) -> Response:
     """
     POST endpoint to generate images using the ControlNet model.
     file: The image file to be used as input for the model.
@@ -100,4 +101,7 @@ async def upload_image(
 
     except Exception as e:
         logger.error(f"Error processing file {file.filename}: {e}")
-        return {"error": str(e)}
+        return JSONResponse(
+            status_code=400,
+            content={"error": str(e)}
+        )

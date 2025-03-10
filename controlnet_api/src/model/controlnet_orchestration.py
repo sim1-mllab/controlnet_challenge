@@ -5,6 +5,7 @@ from pytorch_lightning import seed_everything
 import numpy as np
 import sys
 from pathlib import Path
+from typing import Any, List
 from src.utils.logging_utils import get_logger
 
 # Get the parent directory of the current file (main.py)
@@ -57,7 +58,7 @@ def process(
     eta: float,
     low_threshold: int,
     high_threshold: int,
-) -> list[np.ndarray]:
+) -> List[Any]:
     """
     Process the input image using the ControlNet model.
     This is mostly original code from awesomedemo/process()
